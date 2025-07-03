@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, MessageSquare, Sparkles, Send, Image, Bot, Settings } from "lucide-react";
+import { X, Plus, MessageSquare, Sparkles, Image, Bot, Settings } from "lucide-react";
 import { NegotiationTab } from '../pages/App';
 import CategorySelector from './CategorySelector';
 import ListingForm from './ListingForm';
@@ -242,7 +242,7 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                       </TabsList>
 
                       <TabsContent value="form" className="space-y-12">
-                        <div className="grid lg:grid-cols-2 gap-12">
+                        <div className="max-w-4xl mx-auto">
                           <ListingForm
                             listingTitle={tab.title}
                             setListingTitle={(title) => onUpdateTab(tab.id, { title })}
@@ -257,19 +257,6 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                             isLoading={isLoading}
                             onGenerateOffer={() => handleGenerateOffer(tab)}
                             selectedCategory={tab.category}
-                          />
-
-                          <ConversationalAI
-                            selectedCategory={tab.category}
-                            negotiationData={{
-                              title: tab.title,
-                              originalPrice: tab.originalPrice,
-                              currentOffer: tab.currentOffer,
-                              maxBudget: tab.maxBudget,
-                              platform: tab.platform
-                            }}
-                            messages={tab.messages}
-                            onUpdateMessages={(messages) => onUpdateTab(tab.id, { messages })}
                           />
                         </div>
                       </TabsContent>
@@ -293,118 +280,6 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                         />
                       </TabsContent>
                     </Tabs>
-
-                    {/* Enhanced Chat Interface */}
-                    {tab.currentOffer && activeSubTab === 'form' && (
-                      <div className="border-t-2 border-white/10 pt-16">
-                        <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 backdrop-blur-xl rounded-3xl p-12 border border-emerald-500/20">
-                          <h3 className="text-5xl font-black text-white mb-12 flex items-center gap-8">
-                            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-3xl flex items-center justify-center shadow-2xl">
-                              <MessageSquare className="w-10 h-10 text-white" />
-                            </div>
-                            Live Negotiation Thread
-                            <div className="flex items-center gap-4 bg-emerald-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-xl font-black border border-emerald-500/30">
-                              <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse"></div>
-                              Active
-                            </div>
-                          </h3>
-                          
-                          <div className="bg-black/20 backdrop-blur-xl rounded-3xl p-10 max-h-96 overflow-y-auto mb-10 shadow-2xl border border-white/20">
-                            {tab.messages.length === 0 ? (
-                              <div className="text-center py-20 text-gray-400">
-                                <div className="w-24 h-24 bg-white/10 backdrop-blur-xl rounded-3xl flex items-center justify-center mx-auto mb-10 border border-white/20">
-                                  <MessageSquare className="w-12 h-12 text-gray-300" />
-                                </div>
-                                <h4 className="text-3xl font-black text-white mb-6">Ready to Start Negotiating</h4>
-                                <p className="text-gray-300 max-w-lg mx-auto text-xl font-medium">
-                                  Your AI-generated message is ready. Copy it and send to the seller, then paste their response here to continue the conversation.
-                                </p>
-                              </div>
-                            ) : (
-                              <div className="space-y-10">
-                                {tab.messages.map((message) => (
-                                  <div
-                                    key={message.id}
-                                    className={`flex gap-8 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-                                  >
-                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-2xl ${
-                                      message.type === 'ai' 
-                                        ? 'bg-gradient-to-br from-emerald-500 to-cyan-500' 
-                                        : message.type === 'seller'
-                                        ? 'bg-gradient-to-br from-orange-500 to-red-500'
-                                        : 'bg-gradient-to-br from-gray-500 to-gray-600'
-                                    }`}>
-                                      <span className="text-white font-black text-xl">
-                                        {message.type === 'ai' ? 'AI' : message.type === 'seller' ? 'S' : 'U'}
-                                      </span>
-                                    </div>
-                                    <div className={`flex-1 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
-                                      <div className={`inline-block p-10 rounded-3xl max-w-[85%] shadow-2xl ${
-                                        message.type === 'ai'
-                                          ? 'bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl border border-emerald-500/30 text-white'
-                                          : message.type === 'seller'
-                                          ? 'bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-xl border border-orange-500/30 text-white'
-                                          : 'bg-gradient-to-br from-gray-500/20 to-gray-600/20 backdrop-blur-xl border border-gray-500/30 text-white'
-                                      }`}>
-                                        <p className="text-xl leading-relaxed font-medium">{message.content}</p>
-                                        {message.type === 'ai' && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              navigator.clipboard.writeText(message.content);
-                                              toast({
-                                                title: "Copied!",
-                                                description: "AI message copied to clipboard.",
-                                              });
-                                            }}
-                                            className="mt-6 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/20 font-black px-6 py-3 rounded-xl"
-                                          >
-                                            <MessageSquare className="w-5 h-5 mr-2" />
-                                            Copy Message
-                                          </Button>
-                                        )}
-                                      </div>
-                                      <p className="text-base text-gray-400 mt-4 font-medium">
-                                        {message.timestamp.toLocaleTimeString()} • {message.timestamp.toLocaleDateString()}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex gap-8">
-                            <input
-                              type="text"
-                              placeholder="Paste the seller's response here or type your message..."
-                              className="flex-1 px-10 py-8 border-2 border-white/20 rounded-3xl focus:border-emerald-400 transition-colors text-xl bg-black/20 backdrop-blur-xl text-white placeholder:text-gray-400 font-medium"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                  const content = e.currentTarget.value.trim();
-                                  onUpdateTab(tab.id, {
-                                    messages: [
-                                      ...tab.messages,
-                                      {
-                                        id: Date.now().toString(),
-                                        type: 'user',
-                                        content,
-                                        timestamp: new Date()
-                                      }
-                                    ]
-                                  });
-                                  e.currentTarget.value = '';
-                                }
-                              }}
-                            />
-                            <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 px-12 py-8 text-xl shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 rounded-3xl font-black">
-                              <Send className="w-8 h-8" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
