@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, MessageSquare, Sparkles, Send, Link, Image, Bot } from "lucide-react";
+import { X, Plus, MessageSquare, Sparkles, Send, Image, Bot, Settings } from "lucide-react";
 import { NegotiationTab } from '../pages/App';
 import CategorySelector from './CategorySelector';
 import ListingForm from './ListingForm';
-import NegotiationResults from './NegotiationResults';
-import AIConversationChat from './AIConversationChat';
-import ListingUrlParser from './ListingUrlParser';
+import ConversationalAI from './ConversationalAI';
 import ConversationImageAnalyzer from './ConversationImageAnalyzer';
-import BetterDeals from './BetterDeals';
 import { calculateCounterOffer, generateNegotiationMessage } from '../utils/negotiationUtils';
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,20 +34,6 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
       setActiveTab(tabs[0].id);
     }
   }, [tabs, activeTab]);
-
-  const handleListingParsed = (tabId: string, data: {
-    title: string;
-    price: string;
-    platform: string;
-    description?: string;
-  }) => {
-    onUpdateTab(tabId, {
-      title: data.title,
-      originalPrice: parseFloat(data.price) || 0,
-      platform: data.platform
-    });
-    setActiveSubTab('form');
-  };
 
   const handleGenerateOffer = async (tab: NegotiationTab) => {
     if (!tab.title || !tab.originalPrice || !tab.platform || !tab.category) {
@@ -112,7 +95,7 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
         <h3 className="text-5xl font-black text-white mb-8">Start Your First Negotiation</h3>
         <p className="text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
           Create a new negotiation tab to begin saving money with AI-powered strategies. 
-          Use our advanced tools to parse listings, analyze conversations, and get perfect responses.
+          Use our advanced tools to analyze conversations and get perfect responses.
         </p>
         <Button 
           onClick={onCreateNew}
@@ -195,35 +178,46 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
           <Card className="shadow-2xl border-0 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20">
             <CardContent className="p-12">
               <div className="space-y-12">
-                {/* Category Selection */}
-                {!tab.category && (
-                  <div className="text-center">
+                {/* Category Selection with Change Option */}
+                <div className="text-center">
+                  {!tab.category ? (
                     <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-lg font-bold mb-10 border border-emerald-500/30">
                       <Sparkles className="w-6 h-6" />
                       Step 1: Choose Your Category
                     </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-4 mb-10">
+                      <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-lg font-bold border border-emerald-500/30">
+                        <Sparkles className="w-6 h-6" />
+                        Category: {tab.category.charAt(0).toUpperCase() + tab.category.slice(1).replace('-', ' ')}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => onUpdateTab(tab.id, { category: '' })}
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 font-bold"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Change Category
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {!tab.category && (
                     <CategorySelector
                       selectedCategory={tab.category}
                       onCategorySelect={(category) => 
                         onUpdateTab(tab.id, { category })
                       }
                     />
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Main Interface */}
                 {tab.category && (
                   <div className="space-y-10">
-                    <div className="text-center">
-                      <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-lg font-bold mb-8 border border-emerald-500/30">
-                        <Sparkles className="w-6 h-6" />
-                        Category: {tab.category.charAt(0).toUpperCase() + tab.category.slice(1).replace('-', ' ')}
-                      </div>
-                    </div>
-
                     {/* Enhanced Sub-tabs */}
                     <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-4 mb-10 bg-black/30 backdrop-blur-xl shadow-2xl rounded-3xl p-4 h-20 border border-white/20">
+                      <TabsList className="grid w-full grid-cols-3 mb-10 bg-black/30 backdrop-blur-xl shadow-2xl rounded-3xl p-4 h-20 border border-white/20">
                         <TabsTrigger 
                           value="form" 
                           className="text-lg font-bold h-14 rounded-2xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-white hover:text-white hover:bg-white/10"
@@ -232,18 +226,11 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                           Manual Entry
                         </TabsTrigger>
                         <TabsTrigger 
-                          value="url" 
-                          className="text-lg font-bold h-14 rounded-2xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-500 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-white hover:text-white hover:bg-white/10"
-                        >
-                          <Link className="w-5 h-5 mr-3" />
-                          URL Parser
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="chat" 
+                          value="ai-chat" 
                           className="text-lg font-bold h-14 rounded-2xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-white hover:text-white hover:bg-white/10"
                         >
                           <Bot className="w-5 h-5 mr-3" />
-                          AI Chat
+                          AI Assistant
                         </TabsTrigger>
                         <TabsTrigger 
                           value="image" 
@@ -255,12 +242,14 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                       </TabsList>
 
                       <TabsContent value="form" className="space-y-10">
-                        <div className="grid lg:grid-cols-3 gap-10">
+                        <div className="grid lg:grid-cols-2 gap-10">
                           <ListingForm
                             listingTitle={tab.title}
                             setListingTitle={(title) => onUpdateTab(tab.id, { title })}
                             listingPrice={tab.originalPrice.toString()}
                             setListingPrice={(price) => onUpdateTab(tab.id, { originalPrice: parseFloat(price) || 0 })}
+                            maxBudget={tab.maxBudget?.toString() || ''}
+                            setMaxBudget={(budget) => onUpdateTab(tab.id, { maxBudget: parseFloat(budget) || undefined })}
                             platform={tab.platform}
                             setPlatform={(platform) => onUpdateTab(tab.id, { platform })}
                             extraNotes=""
@@ -270,76 +259,34 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                             selectedCategory={tab.category}
                           />
 
-                          <NegotiationResults
-                            counterOffer={tab.currentOffer?.toString() || ''}
-                            negotiationMessage={tab.messages.find(m => m.type === 'ai')?.content || ''}
-                            listingPrice={tab.originalPrice.toString()}
-                            onCopyToClipboard={(text) => {
-                              navigator.clipboard.writeText(text);
-                              toast({
-                                title: "Copied!",
-                                description: "Message copied to clipboard.",
-                              });
-                            }}
+                          <ConversationalAI
                             selectedCategory={tab.category}
-                          />
-
-                          <BetterDeals
-                            searchQuery={tab.title}
-                            category={tab.category}
-                            currentPrice={tab.originalPrice}
+                            negotiationData={{
+                              title: tab.title,
+                              originalPrice: tab.originalPrice,
+                              currentOffer: tab.currentOffer,
+                              maxBudget: tab.maxBudget,
+                              platform: tab.platform
+                            }}
+                            messages={tab.messages}
+                            onUpdateMessages={(messages) => onUpdateTab(tab.id, { messages })}
                           />
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="url" className="space-y-10">
-                        <div className="max-w-5xl mx-auto">
-                          <ListingUrlParser 
-                            onListingParsed={(data) => handleListingParsed(tab.id, data)}
-                          />
-                          
-                          {(tab.title || tab.originalPrice > 0) && (
-                            <div className="mt-10 grid lg:grid-cols-3 gap-10">
-                              <ListingForm
-                                listingTitle={tab.title}
-                                setListingTitle={(title) => onUpdateTab(tab.id, { title })}
-                                listingPrice={tab.originalPrice.toString()}
-                                setListingPrice={(price) => onUpdateTab(tab.id, { originalPrice: parseFloat(price) || 0 })}
-                                platform={tab.platform}
-                                setPlatform={(platform) => onUpdateTab(tab.id, { platform })}
-                                extraNotes=""
-                                setExtraNotes={() => {}}
-                                isLoading={isLoading}
-                                onGenerateOffer={() => handleGenerateOffer(tab)}
-                                selectedCategory={tab.category}
-                              />
-
-                              <NegotiationResults
-                                counterOffer={tab.currentOffer?.toString() || ''}
-                                negotiationMessage={tab.messages.find(m => m.type === 'ai')?.content || ''}
-                                listingPrice={tab.originalPrice.toString()}
-                                onCopyToClipboard={(text) => {
-                                  navigator.clipboard.writeText(text);
-                                  toast({
-                                    title: "Copied!",
-                                    description: "Message copied to clipboard.",
-                                  });
-                                }}
-                                selectedCategory={tab.category}
-                              />
-
-                              <BetterDeals
-                                searchQuery={tab.title}
-                                category={tab.category}
-                                currentPrice={tab.originalPrice}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="chat" className="space-y-10">
-                        <AIConversationChat selectedCategory={tab.category} />
+                      <TabsContent value="ai-chat" className="space-y-10">
+                        <ConversationalAI
+                          selectedCategory={tab.category}
+                          negotiationData={{
+                            title: tab.title,
+                            originalPrice: tab.originalPrice,
+                            currentOffer: tab.currentOffer,
+                            maxBudget: tab.maxBudget,
+                            platform: tab.platform
+                          }}
+                          messages={tab.messages}
+                          onUpdateMessages={(messages) => onUpdateTab(tab.id, { messages })}
+                        />
                       </TabsContent>
 
                       <TabsContent value="image" className="space-y-10">

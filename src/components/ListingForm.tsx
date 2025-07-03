@@ -5,13 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Sparkles, AlertCircle } from "lucide-react";
+import { Zap, Sparkles, AlertCircle, DollarSign, Target } from "lucide-react";
 
 interface ListingFormProps {
   listingTitle: string;
   setListingTitle: (value: string) => void;
   listingPrice: string;
   setListingPrice: (value: string) => void;
+  maxBudget: string;
+  setMaxBudget: (value: string) => void;
   platform: string;
   setPlatform: (value: string) => void;
   extraNotes: string;
@@ -26,6 +28,8 @@ const ListingForm: React.FC<ListingFormProps> = ({
   setListingTitle,
   listingPrice,
   setListingPrice,
+  maxBudget,
+  setMaxBudget,
   platform,
   setPlatform,
   extraNotes,
@@ -34,6 +38,9 @@ const ListingForm: React.FC<ListingFormProps> = ({
   onGenerateOffer,
   selectedCategory
 }) => {
+  const budgetWarning = maxBudget && listingPrice && parseFloat(maxBudget) > parseFloat(listingPrice);
+  const budgetTooLow = maxBudget && listingPrice && parseFloat(maxBudget) < parseFloat(listingPrice) * 0.5;
+
   return (
     <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
       <CardHeader className="pb-6">
@@ -69,17 +76,68 @@ const ListingForm: React.FC<ListingFormProps> = ({
           />
         </div>
 
-        <div className="space-y-3">
-          <Label htmlFor="price" className="text-base font-medium">Listing Price ($)</Label>
-          <Input
-            id="price"
-            type="number"
-            placeholder="Enter the asking price"
-            value={listingPrice}
-            onChange={(e) => setListingPrice(e.target.value)}
-            className="h-12 text-base border-2 focus:border-green-500 transition-colors"
-          />
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <Label htmlFor="price" className="text-base font-medium flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Listing Price ($)
+            </Label>
+            <Input
+              id="price"
+              type="number"
+              placeholder="Enter the asking price"
+              value={listingPrice}
+              onChange={(e) => setListingPrice(e.target.value)}
+              className="h-12 text-base border-2 focus:border-green-500 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="budget" className="text-base font-medium flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Your Maximum Budget ($)
+            </Label>
+            <Input
+              id="budget"
+              type="number"
+              placeholder="What's the most you'd pay?"
+              value={maxBudget}
+              onChange={(e) => setMaxBudget(e.target.value)}
+              className="h-12 text-base border-2 focus:border-blue-500 transition-colors"
+            />
+          </div>
         </div>
+
+        {/* Budget Warnings */}
+        {budgetWarning && (
+          <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertCircle className="w-4 h-4" />
+              <span className="font-medium">Your budget is higher than the asking price. Consider lowering it for better negotiation.</span>
+            </div>
+          </div>
+        )}
+
+        {budgetTooLow && (
+          <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-4 h-4" />
+              <span className="font-medium">Your budget might be too low for successful negotiation. Consider increasing it.</span>
+            </div>
+          </div>
+        )}
+
+        {maxBudget && listingPrice && !budgetWarning && !budgetTooLow && (
+          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+            <div className="flex items-center gap-2 text-green-700">
+              <Target className="w-4 h-4" />
+              <span className="font-medium">
+                Good budget range! You could potentially save ${parseFloat(listingPrice) - parseFloat(maxBudget)} 
+                ({Math.round(((parseFloat(listingPrice) - parseFloat(maxBudget)) / parseFloat(listingPrice)) * 100)}% off)
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           <Label htmlFor="platform" className="text-base font-medium">Platform</Label>

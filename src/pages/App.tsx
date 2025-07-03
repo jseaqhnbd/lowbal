@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from '../components/AppHeader';
 import NegotiationTabs from '../components/NegotiationTabs';
-import ReviewsTab from '../components/ReviewsTab';
+import ActiveNegotiations from '../components/ActiveNegotiations';
 import OrderHistory from '../components/OrderHistory';
 import SavingsTracker from '../components/SavingsTracker';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Star, History, TrendingUp, Plus } from "lucide-react";
+import { MessageSquare, Activity, History, TrendingUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,19 @@ export interface NegotiationTab {
   category: string;
   platform: string;
   originalPrice: number;
+  maxBudget?: number;
   currentOffer?: number;
   status: 'active' | 'completed' | 'closed';
   createdAt: Date;
+  lastActivity: Date;
+  progress: number; // 0-100 percentage
   messages: Array<{
     id: string;
     type: 'user' | 'ai' | 'seller';
     content: string;
     timestamp: Date;
+    isAudio?: boolean;
+    hasImage?: boolean;
   }>;
 }
 
@@ -45,7 +50,56 @@ export interface CompletedDeal {
 
 const AppPage = () => {
   const [activeMainTab, setActiveMainTab] = useState('negotiate');
-  const [negotiationTabs, setNegotiationTabs] = useState<NegotiationTab[]>([]);
+  const [negotiationTabs, setNegotiationTabs] = useState<NegotiationTab[]>([
+    {
+      id: '1',
+      title: '2020 MacBook Pro 13"',
+      category: 'electronics',
+      platform: 'Facebook Marketplace',
+      originalPrice: 1200,
+      maxBudget: 950,
+      currentOffer: 900,
+      status: 'active',
+      createdAt: new Date('2024-01-20'),
+      lastActivity: new Date('2024-01-22'),
+      progress: 65,
+      messages: [
+        {
+          id: '1',
+          type: 'ai',
+          content: 'Hi! I\'m very interested in your MacBook Pro 13". I\'ve been looking for this exact model and I\'m ready to purchase today. Based on current market prices, would you consider $900? I can pick it up immediately with cash if we can agree on this price.',
+          timestamp: new Date('2024-01-20T10:00:00')
+        },
+        {
+          id: '2',
+          type: 'seller',
+          content: 'Thanks for your interest! The laptop is in excellent condition with original packaging. I could do $1000 for a quick sale.',
+          timestamp: new Date('2024-01-21T14:30:00')
+        }
+      ]
+    },
+    {
+      id: '2',
+      title: '2019 Honda Civic',
+      category: 'cars',
+      platform: 'Craigslist',
+      originalPrice: 18000,
+      maxBudget: 16000,
+      currentOffer: 15500,
+      status: 'active',
+      createdAt: new Date('2024-01-18'),
+      lastActivity: new Date('2024-01-21'),
+      progress: 40,
+      messages: [
+        {
+          id: '1',
+          type: 'ai',
+          content: 'Hi! I\'m very interested in your 2019 Honda Civic. I\'ve been looking for exactly this model and I\'m ready to purchase immediately. Based on current market values and the condition, would you consider $15,500? I can come see it this week and complete the purchase with financing.',
+          timestamp: new Date('2024-01-18T09:00:00')
+        }
+      ]
+    }
+  ]);
   const [completedDeals, setCompletedDeals] = useState<CompletedDeal[]>([
     {
       id: '1',
@@ -99,6 +153,8 @@ const AppPage = () => {
       originalPrice: 0,
       status: 'active',
       createdAt: new Date(),
+      lastActivity: new Date(),
+      progress: 0,
       messages: []
     };
     
@@ -114,7 +170,7 @@ const AppPage = () => {
   const updateNegotiationTab = (tabId: string, updates: Partial<NegotiationTab>) => {
     setNegotiationTabs(prev => 
       prev.map(tab => 
-        tab.id === tabId ? { ...tab, ...updates } : tab
+        tab.id === tabId ? { ...tab, ...updates, lastActivity: new Date() } : tab
       )
     );
   };
@@ -169,10 +225,11 @@ const AppPage = () => {
   const totalSavings = completedDeals.reduce((sum, deal) => sum + deal.savings, 0);
   const totalDeals = completedDeals.length;
   const averageSavings = totalDeals > 0 ? Math.round(totalSavings / totalDeals) : 0;
+  const activeNegotiationsCount = negotiationTabs.filter(tab => tab.status === 'active').length;
 
   const tabsConfig = [
     { value: 'negotiate', label: 'Negotiate', icon: MessageSquare, count: negotiationTabs.length, gradient: 'from-emerald-500 to-cyan-500' },
-    { value: 'reviews', label: 'Reviews', icon: Star, gradient: 'from-cyan-500 to-blue-500' },
+    { value: 'active', label: 'Active Deals', icon: Activity, count: activeNegotiationsCount, gradient: 'from-cyan-500 to-blue-500' },
     { value: 'history', label: 'History', icon: History, count: totalDeals, gradient: 'from-blue-500 to-purple-500' },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, gradient: 'from-purple-500 to-pink-500' }
   ];
@@ -191,11 +248,71 @@ const AppPage = () => {
         </Button>
       </div>
 
-      <SavingsTracker 
-        totalSavings={totalSavings}
-        totalDeals={totalDeals}
-        averageSavings={averageSavings}
-      />
+      {/* Enhanced Savings Tracker */}
+      <div className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-blue-600 py-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-2 left-10 w-20 h-20 bg-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-2 right-10 w-32 h-32 bg-white/5 rounded-full animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse delay-500"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="grid md:grid-cols-5 gap-6">
+            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                ${totalSavings.toLocaleString()}
+              </div>
+              <div className="text-white/80 font-medium">Total Saved</div>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Activity className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {activeNegotiationsCount}
+              </div>
+              <div className="text-white/80 font-medium">Active Deals</div>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <History className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {totalDeals}
+              </div>
+              <div className="text-white/80 font-medium">Completed</div>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                ${averageSavings}
+              </div>
+              <div className="text-white/80 font-medium">Avg. Savings</div>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">%</span>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {totalDeals > 0 ? Math.round((completedDeals.reduce((sum, deal) => sum + deal.savingsPercentage, 0) / totalDeals)) : 0}%
+              </div>
+              <div className="text-white/80 font-medium">Avg. Discount</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
@@ -204,10 +321,17 @@ const AppPage = () => {
               <TabsTrigger 
                 key={tab.value}
                 value={tab.value} 
-                className={`text-lg font-bold h-18 rounded-2xl data-[state=active]:bg-gradient-to-r data-[state=active]:${tab.gradient} data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-gray-300 hover:text-white`}
+                className={`text-lg font-bold h-18 rounded-2xl data-[state=active]:bg-gradient-to-r data-[state=active]:${tab.gradient} data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-gray-300 hover:text-white flex flex-col items-center gap-1`}
               >
-                <tab.icon className="w-6 h-6 mr-3" />
-                {tab.label} {tab.count !== undefined && `(${tab.count})`}
+                <tab.icon className="w-6 h-6" />
+                <div className="flex items-center gap-2">
+                  {tab.label}
+                  {tab.count !== undefined && (
+                    <span className="bg-white/20 text-xs px-2 py-1 rounded-full font-bold">
+                      {tab.count}
+                    </span>
+                  )}
+                </div>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -221,8 +345,11 @@ const AppPage = () => {
             />
           </TabsContent>
 
-          <TabsContent value="reviews">
-            <ReviewsTab />
+          <TabsContent value="active">
+            <ActiveNegotiations 
+              negotiations={negotiationTabs.filter(tab => tab.status === 'active')}
+              onUpdateNegotiation={updateNegotiationTab}
+            />
           </TabsContent>
 
           <TabsContent value="history">
