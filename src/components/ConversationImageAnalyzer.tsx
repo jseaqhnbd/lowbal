@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Image, Sparkles, Eye, MessageSquare, TrendingDown, Camera, FileImage, CheckCircle, AlertTriangle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Upload, Image, Sparkles, Eye, MessageSquare, TrendingDown, Camera, FileImage, CheckCircle, AlertTriangle, Send, Bot, User, Copy, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ConversationImageAnalyzerProps {
@@ -27,6 +28,16 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{
+    id: string;
+    type: 'user' | 'ai';
+    content: string;
+    timestamp: Date;
+    isAudio?: boolean;
+  }>>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -216,9 +227,18 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
       const result = mockResults[selectedCategory] || mockResults['electronics'];
       setAnalysisResult(result);
 
+      // Add initial AI message to chat
+      const initialMessage = {
+        id: Date.now().toString(),
+        type: 'ai' as const,
+        content: `I've analyzed your conversation screenshot. Based on the ${selectedCategory} negotiation, I can see that ${result.sellerMotivation.toLowerCase()}. The seller's sentiment appears ${result.sentiment}. Feel free to ask me any questions about the analysis or negotiation strategy!`,
+        timestamp: new Date()
+      };
+      setChatMessages([initialMessage]);
+
       toast({
         title: "Analysis Complete! 🎉",
-        description: "Your conversation has been analyzed with AI insights and recommendations.",
+        description: "Your conversation has been analyzed. You can now chat with AI about the results.",
       });
     } catch (error) {
       toast({
@@ -228,6 +248,80 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
       });
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: inputMessage,
+      timestamp: new Date(),
+      isAudio: isRecording
+    };
+
+    const updatedMessages = [...chatMessages, userMessage];
+    setChatMessages(updatedMessages);
+
+    setIsLoading(true);
+    setInputMessage('');
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const aiResponse = generateContextualResponse(inputMessage, analysisResult);
+      
+      const aiMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: aiResponse,
+        timestamp: new Date()
+      };
+
+      setChatMessages([...updatedMessages, aiMessage]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate AI response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateContextualResponse = (userInput: string, analysis: AnalysisResult | null) => {
+    if (!analysis) return "Please upload and analyze a conversation first so I can provide specific guidance.";
+
+    const responses = [
+      `Based on the analysis, I'd recommend focusing on the seller's ${analysis.urgencyLevel} urgency level. ${analysis.sellerMotivation} This gives you leverage in the negotiation.`,
+      `The conversation shows ${analysis.sentiment} sentiment, which means you should ${analysis.sentiment === 'positive' ? 'maintain the friendly tone' : analysis.sentiment === 'negative' ? 'address any concerns first' : 'build more rapport before making your offer'}.`,
+      `Given the ${analysis.priceAnalysis?.priceFlexibility || 'medium'} price flexibility I detected, you have ${analysis.priceAnalysis?.priceFlexibility === 'high' ? 'good room to negotiate' : analysis.priceAnalysis?.priceFlexibility === 'low' ? 'limited negotiation space' : 'moderate negotiation potential'}.`,
+      `Here's a key insight from the analysis: ${analysis.keyPoints[Math.floor(Math.random() * analysis.keyPoints.length)]}. You can use this to your advantage.`,
+      `My recommendation is to ${analysis.negotiationTips[Math.floor(Math.random() * analysis.negotiationTips.length)].toLowerCase()}.`
+    ];
+
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  const handleVoiceRecording = () => {
+    if (isRecording) {
+      setIsRecording(false);
+      setTimeout(() => {
+        setInputMessage("What's the best strategy based on this analysis?");
+        toast({
+          title: "Voice Recorded",
+          description: "Your voice message has been converted to text.",
+        });
+      }, 1000);
+    } else {
+      setIsRecording(true);
+      toast({
+        title: "Recording Started",
+        description: "Speak your message now...",
+      });
     }
   };
 
@@ -258,29 +352,27 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       {/* Enhanced Upload Section */}
-      <Card className="shadow-2xl border-0 bg-gradient-to-br from-purple-50 via-white to-pink-50 overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full -translate-y-12 translate-x-12"></div>
-        
-        <CardHeader className="pb-8 relative z-10">
-          <CardTitle className="flex items-center gap-4 text-3xl">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <Image className="w-8 h-8 text-white" />
+      <Card className="shadow-xl border-0 bg-gradient-to-br from-purple-50 via-white to-pink-50 overflow-hidden">
+        <CardHeader className="pb-6">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Image className="w-6 h-6 text-white" />
             </div>
             <div>
-              <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <div className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 AI Image Analyzer
               </div>
-              <p className="text-lg text-gray-600 font-normal">Upload conversation screenshots for deep analysis</p>
+              <p className="text-sm text-gray-600 font-normal">Upload conversation screenshots for deep analysis</p>
             </div>
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="space-y-8 relative z-10">
-          <div className="space-y-6">
-            <Label className="text-lg font-semibold text-gray-800">Upload Conversation Screenshot</Label>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <Label className="text-sm font-semibold text-gray-800">Upload Conversation Screenshot</Label>
             
             <div 
-              className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all duration-300 cursor-pointer ${
+              className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer ${
                 dragActive 
                   ? 'border-purple-400 bg-purple-50' 
                   : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
@@ -292,32 +384,32 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
               onDrop={handleDrop}
             >
               {uploadedImage ? (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <img 
                     src={uploadedImage} 
                     alt="Uploaded conversation" 
-                    className="max-w-full max-h-64 mx-auto rounded-2xl shadow-xl border-4 border-white"
+                    className="max-w-full max-h-48 mx-auto rounded-xl shadow-lg border-2 border-white"
                   />
-                  <div className="space-y-2">
-                    <p className="text-lg font-medium text-gray-700">Image uploaded successfully!</p>
-                    <p className="text-sm text-gray-500">Click to upload a different image</p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-700">Image uploaded successfully!</p>
+                    <p className="text-xs text-gray-500">Click to upload a different image</p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-3xl flex items-center justify-center mx-auto">
-                    <Upload className="w-10 h-10 text-purple-600" />
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mx-auto">
+                    <Upload className="w-8 h-8 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-xl font-semibold text-gray-700 mb-2">Drop your screenshot here</p>
-                    <p className="text-lg text-gray-600 mb-4">or click to browse files</p>
-                    <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+                    <p className="text-lg font-semibold text-gray-700 mb-2">Drop your screenshot here</p>
+                    <p className="text-sm text-gray-600 mb-3">or click to browse files</p>
+                    <div className="flex items-center justify-center gap-3 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
-                        <FileImage className="w-4 h-4" />
+                        <FileImage className="w-3 h-3" />
                         PNG, JPG
                       </div>
                       <div className="flex items-center gap-1">
-                        <Camera className="w-4 h-4" />
+                        <Camera className="w-3 h-3" />
                         Up to 10MB
                       </div>
                     </div>
@@ -336,13 +428,13 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
           </div>
 
           {selectedCategory && (
-            <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200">
-              <div className="flex items-center gap-3 text-purple-700 font-semibold mb-2">
-                <Sparkles className="w-5 h-5" />
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+              <div className="flex items-center gap-2 text-purple-700 font-semibold mb-1">
+                <Sparkles className="w-4 h-4" />
                 Category: {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).replace('-', ' ')}
               </div>
-              <p className="text-purple-600">
-                Analysis will be optimized for {selectedCategory.replace('-', ' ')} conversations with specialized insights
+              <p className="text-purple-600 text-sm">
+                Analysis will be optimized for {selectedCategory.replace('-', ' ')} conversations
               </p>
             </div>
           )}
@@ -350,186 +442,192 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
           <Button 
             onClick={analyzeConversation}
             disabled={isAnalyzing || !uploadedImage}
-            className="w-full h-16 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 disabled:opacity-50"
+            className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
           >
             {isAnalyzing ? (
               <>
-                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mr-4"></div>
-                Analyzing Conversation... Please wait
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3"></div>
+                Analyzing Conversation...
               </>
             ) : (
               <>
-                <Eye className="w-6 h-6 mr-4" />
-                Analyze Conversation with AI
+                <Eye className="w-4 h-4 mr-3" />
+                Analyze with AI
               </>
             )}
           </Button>
-
-          {/* Features */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-200">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">AI Analysis includes:</h4>
-            <div className="grid gap-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Sentiment analysis of conversation tone</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Price flexibility assessment</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Seller motivation analysis</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-gray-700">Personalized response suggestions</span>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Enhanced Analysis Results */}
-      <Card className="shadow-2xl border-0 bg-gradient-to-br from-green-50 via-white to-blue-50 overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-200/30 to-blue-200/30 rounded-full -translate-y-16 -translate-x-16"></div>
-        
-        <CardHeader className="pb-8 relative z-10">
-          <CardTitle className="flex items-center gap-4 text-3xl">
-            <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
-              <Sparkles className="w-8 h-8 text-white" />
+      {/* Enhanced Analysis Results with Chat */}
+      <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50 via-white to-blue-50 overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                AI Analysis Results
+              <div className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                AI Analysis Chat
               </div>
-              <p className="text-lg text-gray-600 font-normal">Insights and recommendations from your conversation</p>
+              <p className="text-sm text-gray-600 font-normal">Chat with AI about your analysis results</p>
             </div>
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="relative z-10">
+        <CardContent className="flex flex-col h-[500px]">
           {!analysisResult ? (
-            <div className="text-center py-16 text-gray-500">
-              <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <Eye className="w-10 h-10 text-gray-300" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-700 mb-4">Ready to Analyze</h3>
-              <p className="text-lg text-gray-500 max-w-sm mx-auto leading-relaxed">
-                Upload a conversation screenshot to get AI-powered insights and negotiation advice
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Enhanced Sentiment & Urgency Analysis */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className={`p-6 rounded-2xl border-2 ${getSentimentColor(analysisResult.sentiment)}`}>
-                  <div className="flex items-center gap-3 font-semibold mb-2">
-                    <span className="text-2xl">{getSentimentIcon(analysisResult.sentiment)}</span>
-                    <div>
-                      <div className="text-lg">Conversation Sentiment</div>
-                      <div className="text-sm opacity-80">{analysisResult.sentiment.charAt(0).toUpperCase() + analysisResult.sentiment.slice(1)}</div>
-                    </div>
-                  </div>
+            <div className="flex-1 flex items-center justify-center text-center py-12 text-gray-500">
+              <div className="space-y-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto">
+                  <Eye className="w-8 h-8 text-gray-300" />
                 </div>
-
-                <div className={`p-6 rounded-2xl border-2 ${getUrgencyColor(analysisResult.urgencyLevel)}`}>
-                  <div className="flex items-center gap-3 font-semibold mb-2">
-                    <AlertTriangle className="w-6 h-6" />
-                    <div>
-                      <div className="text-lg">Urgency Level</div>
-                      <div className="text-sm opacity-80">{analysisResult.urgencyLevel.charAt(0).toUpperCase() + analysisResult.urgencyLevel.slice(1)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Seller Motivation */}
-              <div className="p-6 bg-blue-50 rounded-2xl border-2 border-blue-200">
-                <div className="flex items-center gap-3 text-blue-700 font-semibold mb-3">
-                  <TrendingDown className="w-5 h-5" />
-                  Seller Motivation Analysis
-                </div>
-                <p className="text-blue-600 text-lg">{analysisResult.sellerMotivation}</p>
-              </div>
-
-              {/* Enhanced Price Analysis */}
-              {analysisResult.priceAnalysis && (
-                <div className="p-6 bg-green-50 rounded-2xl border-2 border-green-200">
-                  <div className="flex items-center gap-3 text-green-700 font-semibold mb-4">
-                    <TrendingDown className="w-5 h-5" />
-                    Price Analysis
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {analysisResult.priceAnalysis.mentionedPrice && (
-                      <div>
-                        <div className="text-sm text-green-600 font-medium">Mentioned Price</div>
-                        <div className="text-2xl font-bold text-green-800">{analysisResult.priceAnalysis.mentionedPrice}</div>
-                      </div>
-                    )}
-                    <div>
-                      <div className="text-sm text-green-600 font-medium">Price Flexibility</div>
-                      <div className="text-lg font-semibold text-green-700 capitalize">{analysisResult.priceAnalysis.priceFlexibility}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Key Points */}
-              <div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Key Conversation Points</h4>
-                <ul className="space-y-3">
-                  {analysisResult.keyPoints.map((point, index) => (
-                    <li key={index} className="flex items-start gap-3 text-gray-700 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-base leading-relaxed">{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Enhanced Suggested Response */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-bold text-gray-900">AI-Generated Response</h4>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(analysisResult.suggestedResponse);
-                      toast({
-                        title: "Copied!",
-                        description: "Response copied to clipboard.",
-                      });
-                    }}
-                    className="text-green-600 border-green-200 hover:bg-green-50"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Copy Response
-                  </Button>
-                </div>
-                <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200">
-                  <p className="text-base text-gray-800 leading-relaxed">
-                    {analysisResult.suggestedResponse}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Ready to Analyze</h3>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
+                    Upload a conversation screenshot to get AI-powered insights and start chatting about negotiation strategy
                   </p>
                 </div>
               </div>
-
-              {/* Enhanced Negotiation Tips */}
-              <div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4">Strategic Negotiation Tips</h4>
-                <div className="grid gap-3">
-                  {analysisResult.negotiationTips.map((tip, index) => (
-                    <div key={index} className="flex items-start gap-3 text-gray-700 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-white text-xs font-bold">{index + 1}</span>
+            </div>
+          ) : (
+            <>
+              {/* Quick Analysis Summary */}
+              <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border border-blue-200">
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div className={`p-3 rounded-lg border ${getSentimentColor(analysisResult.sentiment)}`}>
+                    <div className="flex items-center gap-2 font-semibold text-sm">
+                      <span className="text-lg">{getSentimentIcon(analysisResult.sentiment)}</span>
+                      <div>
+                        <div>Sentiment</div>
+                        <div className="text-xs opacity-80">{analysisResult.sentiment}</div>
                       </div>
-                      <span className="text-base leading-relaxed">{tip}</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className={`p-3 rounded-lg border ${getUrgencyColor(analysisResult.urgencyLevel)}`}>
+                    <div className="flex items-center gap-2 font-semibold text-sm">
+                      <AlertTriangle className="w-4 h-4" />
+                      <div>
+                        <div>Urgency</div>
+                        <div className="text-xs opacity-80">{analysisResult.urgencyLevel}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-blue-700 font-medium">{analysisResult.sellerMotivation}</p>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                {chatMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex gap-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      message.type === 'ai' 
+                        ? 'bg-gradient-to-br from-blue-500 to-purple-600' 
+                        : 'bg-gradient-to-br from-gray-500 to-gray-600'
+                    }`}>
+                      {message.type === 'ai' ? (
+                        <Bot className="w-4 h-4 text-white" />
+                      ) : (
+                        <User className="w-4 h-4 text-white" />
+                      )}
+                    </div>
+                    
+                    <div className={`flex-1 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+                      <div className={`inline-block p-3 rounded-xl max-w-[85%] ${
+                        message.type === 'ai'
+                          ? 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 text-blue-900'
+                          : 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-900'
+                      }`}>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        {message.isAudio && (
+                          <div className="mt-2 text-xs text-gray-500 italic">🎤 Voice message</div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-500">
+                          {message.timestamp.toLocaleTimeString()}
+                        </span>
+                        {message.type === 'ai' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(message.content);
+                              toast({ title: "Copied!", description: "Message copied to clipboard." });
+                            }}
+                            className="h-5 px-2 text-xs"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                        <span className="text-sm text-blue-700 ml-2">AI is thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input */}
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Ask me about the analysis, negotiation strategy, or get specific advice..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  className="min-h-[60px] border-2 focus:border-blue-500 transition-colors resize-none text-sm"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleVoiceRecording}
+                    className={`flex-shrink-0 h-8 px-3 text-xs ${isRecording ? 'bg-red-100 border-red-300 text-red-700' : ''}`}
+                  >
+                    {isRecording ? <MicOff className="w-3 h-3 mr-1" /> : <Mic className="w-3 h-3 mr-1" />}
+                    {isRecording ? 'Stop' : 'Voice'}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isLoading || !inputMessage.trim()}
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold h-8 text-xs"
+                  >
+                    {isLoading ? (
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1"></div>
+                    ) : (
+                      <Send className="w-3 h-3 mr-1" />
+                    )}
+                    Send
+                  </Button>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Sparkles, AlertCircle, DollarSign, Target } from "lucide-react";
+import { Zap, Sparkles, AlertCircle, DollarSign, Target, MessageCircle } from "lucide-react";
 
 interface ListingFormProps {
   listingTitle: string;
@@ -38,8 +38,18 @@ const ListingForm: React.FC<ListingFormProps> = ({
   onGenerateOffer,
   selectedCategory
 }) => {
+  const [selectedTone, setSelectedTone] = useState('polite');
+  
   const budgetWarning = maxBudget && listingPrice && parseFloat(maxBudget) > parseFloat(listingPrice);
   const budgetTooLow = maxBudget && listingPrice && parseFloat(maxBudget) < parseFloat(listingPrice) * 0.5;
+
+  const toneOptions = [
+    { value: 'polite', label: 'Polite', description: 'Respectful and courteous approach' },
+    { value: 'friendly', label: 'Friendly', description: 'Warm and personable tone' },
+    { value: 'assertive', label: 'Assertive', description: 'Confident and direct communication' },
+    { value: 'aggressive', label: 'Aggressive', description: 'Bold and demanding approach' },
+    { value: 'professional', label: 'Professional', description: 'Business-like and formal' }
+  ];
 
   return (
     <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
@@ -158,6 +168,32 @@ const ListingForm: React.FC<ListingFormProps> = ({
           </Select>
         </div>
 
+        {/* Tone Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="tone" className="text-sm font-medium flex items-center gap-2">
+            <MessageCircle className="w-4 h-4" />
+            Negotiation Tone
+          </Label>
+          <Select value={selectedTone} onValueChange={setSelectedTone}>
+            <SelectTrigger className="h-10 text-sm border-2 focus:border-purple-500 transition-colors">
+              <SelectValue placeholder="Select tone" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {toneOptions.map((tone) => (
+                <SelectItem key={tone.value} value={tone.value}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{tone.label}</span>
+                    <span className="text-xs text-gray-500">{tone.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">
+            Choose how assertive you want your negotiation messages to be
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="notes" className="text-sm font-medium">Extra Notes / Seller Info (Optional)</Label>
           <Textarea
@@ -180,7 +216,7 @@ const ListingForm: React.FC<ListingFormProps> = ({
               Category: {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1).replace('-', ' ')}
             </div>
             <p className="text-sm text-green-600">
-              Negotiation strategy will be optimized for {selectedCategory.replace('-', ' ')} deals
+              Negotiation strategy will be optimized for {selectedCategory.replace('-', ' ')} deals with a {selectedTone} tone
             </p>
           </div>
         )}

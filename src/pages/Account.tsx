@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, User, CreditCard, Bell, Shield, Crown, Star, Check, X, Edit2, Save, Mail, Phone, MapPin, MessageSquare } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, User, CreditCard, Bell, Shield, Crown, Star, Check, X, Edit2, Save, Mail, Phone, MapPin, MessageSquare, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import BackgroundLayout from '../components/shared/BackgroundLayout';
 import Logo from '../components/shared/Logo';
@@ -34,6 +34,7 @@ const Account = () => {
     savings: ''
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const subscriptionTiers = [
     {
@@ -109,6 +110,15 @@ const Account = () => {
     });
   };
 
+  const handleSignOut = () => {
+    localStorage.removeItem('isAuthenticated');
+    toast({
+      title: "Signed Out",
+      description: "You have been successfully signed out.",
+    });
+    navigate('/');
+  };
+
   const renderStars = (rating: number, interactive = false, onRate?: (rating: number) => void) => {
     return (
       <div className="flex gap-1">
@@ -140,6 +150,13 @@ const Account = () => {
               <Logo size="sm" />
               <h1 className="text-3xl font-black text-white">Account Settings</h1>
             </div>
+            <Button
+              onClick={handleSignOut}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-red-500/25 transition-all duration-300"
+            >
+              <LogOut className="w-5 h-5 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </div>
