@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from '../components/AppHeader';
 import NegotiationTabs from '../components/NegotiationTabs';
 import ActiveNegotiations from '../components/ActiveNegotiations';
 import OrderHistory from '../components/OrderHistory';
 import SavingsTracker from '../components/SavingsTracker';
+import Onboarding from '../components/Onboarding';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Activity, History, TrendingUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +51,7 @@ export interface CompletedDeal {
 }
 
 const AppPage = () => {
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState('negotiate');
   const [negotiationTabs, setNegotiationTabs] = useState<NegotiationTab[]>([]);
   const [completedDeals, setCompletedDeals] = useState<CompletedDeal[]>([]);
@@ -57,6 +60,29 @@ const AppPage = () => {
   const [dealClosed, setDealClosed] = useState(false);
   const [finalPrice, setFinalPrice] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding');
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboardingComplete = (userData: any) => {
+    localStorage.setItem('hasCompletedOnboarding', 'true');
+    localStorage.setItem('userOnboardingData', JSON.stringify(userData));
+    setShowOnboarding(false);
+    
+    toast({
+      title: `Welcome to Lowbal! 🎉`,
+      description: `Your ${userData.userType} profile is ready. Let's start saving money!`,
+    });
+  };
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
 
   const createNewNegotiation = () => {
     const newTab: NegotiationTab = {
