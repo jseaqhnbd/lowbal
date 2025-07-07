@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +36,16 @@ const AITextChat: React.FC<AITextChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() && !uploadedImage) return;
@@ -153,124 +162,127 @@ const AITextChat: React.FC<AITextChatProps> = ({
   };
 
   return (
-    <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-hidden h-[500px] flex flex-col">
-      <CardHeader className="pb-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
-        <CardTitle className="flex items-center gap-3 text-lg">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <Bot className="w-4 h-4 text-white" />
+    <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-hidden h-[450px] flex flex-col">
+      <CardHeader className="pb-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Bot className="w-3 h-3 text-white" />
           </div>
           AI Negotiation Assistant
         </CardTitle>
-        <p className="text-gray-600 text-sm">Have a conversation with your AI negotiation expert</p>
+        <p className="text-gray-600 text-xs">Have a conversation with your AI negotiation expert</p>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-4">
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+      <CardContent className="flex-1 flex flex-col p-3">
+        {/* Messages Area with Dynamic Scrolling */}
+        <div className="flex-1 overflow-y-auto mb-3 space-y-2 max-h-[280px]" style={{ scrollBehavior: 'smooth' }}>
           {messages.length === 0 ? (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
+            <div className="text-center py-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Start Your Conversation</h3>
-              <p className="text-gray-500 text-sm">Ask me anything about your negotiation strategy!</p>
+              <h3 className="text-base font-semibold text-gray-700 mb-1">Start Your Conversation</h3>
+              <p className="text-gray-500 text-xs">Ask me anything about your negotiation strategy!</p>
             </div>
           ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-              >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  message.type === 'ai' 
-                    ? 'bg-gradient-to-br from-blue-500 to-purple-600' 
-                    : 'bg-gradient-to-br from-gray-500 to-gray-600'
-                }`}>
-                  {message.type === 'ai' ? (
-                    <Bot className="w-4 h-4 text-white" />
-                  ) : (
-                    <User className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                
-                <div className={`flex-1 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
-                  <div className={`inline-block p-3 rounded-xl max-w-[85%] ${
-                    message.type === 'ai'
-                      ? 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 text-blue-900'
-                      : 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-900'
+            <>
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                >
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    message.type === 'ai' 
+                      ? 'bg-gradient-to-br from-blue-500 to-purple-600' 
+                      : 'bg-gradient-to-br from-gray-500 to-gray-600'
                   }`}>
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    {message.hasImage && (
-                      <div className="mt-2 text-xs text-gray-500 italic">📷 Image attached</div>
-                    )}
-                    {message.isAudio && (
-                      <div className="mt-2 text-xs text-gray-500 italic">🎤 Voice message</div>
+                    {message.type === 'ai' ? (
+                      <Bot className="w-3 h-3 text-white" />
+                    ) : (
+                      <User className="w-3 h-3 text-white" />
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-500">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
-                    {message.type === 'ai' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(message.content);
-                            toast({ title: "Copied!", description: "Message copied to clipboard." });
-                          }}
-                          className="h-5 px-2 text-xs"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => speakMessage(message.content)}
-                          className="h-5 px-2 text-xs"
-                        >
-                          <Volume2 className="w-3 h-3" />
-                        </Button>
-                      </>
-                    )}
+                  <div className={`flex-1 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+                    <div className={`inline-block p-2 rounded-xl max-w-[85%] ${
+                      message.type === 'ai'
+                        ? 'bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 text-blue-900'
+                        : 'bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-900'
+                    }`}>
+                      <p className="text-xs leading-relaxed">{message.content}</p>
+                      {message.hasImage && (
+                        <div className="mt-1 text-xs text-gray-500 italic">📷 Image attached</div>
+                      )}
+                      {message.isAudio && (
+                        <div className="mt-1 text-xs text-gray-500 italic">🎤 Voice message</div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-gray-500">
+                        {message.timestamp.toLocaleTimeString()}
+                      </span>
+                      {message.type === 'ai' && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(message.content);
+                              toast({ title: "Copied!", description: "Message copied to clipboard." });
+                            }}
+                            className="h-4 px-1 text-xs"
+                          >
+                            <Copy className="w-2 h-2" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => speakMessage(message.content)}
+                            className="h-4 px-1 text-xs"
+                          >
+                            <Volume2 className="w-2 h-2" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-          
-          {isLoading && (
-            <div className="flex gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200"></div>
-                  <span className="text-sm text-blue-700 ml-2">AI is thinking...</span>
+              ))}
+              
+              {isLoading && (
+                <div className="flex gap-2">
+                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Bot className="w-3 h-3 text-white" />
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-2">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce"></div>
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce delay-100"></div>
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce delay-200"></div>
+                      <span className="text-xs text-blue-700 ml-1">AI is thinking...</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+              <div ref={messagesEndRef} />
+            </>
           )}
         </div>
 
         {/* Image Preview */}
         {uploadedImage && (
-          <div className="mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Image className="w-4 h-4 text-gray-600" />
-                <span className="text-sm text-gray-600">Image ready to send</span>
+              <div className="flex items-center gap-1">
+                <Image className="w-3 h-3 text-gray-600" />
+                <span className="text-xs text-gray-600">Image ready to send</span>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setUploadedImage(null)}
-                className="h-5 w-5 p-0"
+                className="h-4 w-4 p-0"
               >
                 ×
               </Button>
@@ -284,7 +296,7 @@ const AITextChat: React.FC<AITextChatProps> = ({
             placeholder="Ask me about negotiation strategies, market insights, or get help crafting your next message..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            className="min-h-[60px] border-2 focus:border-blue-500 transition-colors resize-none text-sm"
+            className="min-h-[50px] border-2 focus:border-blue-500 transition-colors resize-none text-xs"
             onKeyPress={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -293,7 +305,7 @@ const AITextChat: React.FC<AITextChatProps> = ({
             }}
           />
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <input
               ref={fileInputRef}
               type="file"
@@ -306,9 +318,9 @@ const AITextChat: React.FC<AITextChatProps> = ({
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="flex-shrink-0 h-8 px-3 text-xs"
+              className="flex-shrink-0 h-6 px-2 text-xs"
             >
-              <Upload className="w-3 h-3 mr-1" />
+              <Upload className="w-2 h-2 mr-1" />
               Image
             </Button>
             
@@ -316,21 +328,21 @@ const AITextChat: React.FC<AITextChatProps> = ({
               variant="outline"
               size="sm"
               onClick={handleVoiceRecording}
-              className={`flex-shrink-0 h-8 px-3 text-xs ${isRecording ? 'bg-red-100 border-red-300 text-red-700' : ''}`}
+              className={`flex-shrink-0 h-6 px-2 text-xs ${isRecording ? 'bg-red-100 border-red-300 text-red-700' : ''}`}
             >
-              {isRecording ? <MicOff className="w-3 h-3 mr-1" /> : <Mic className="w-3 h-3 mr-1" />}
+              {isRecording ? <MicOff className="w-2 h-2 mr-1" /> : <Mic className="w-2 h-2 mr-1" />}
               {isRecording ? 'Stop' : 'Voice'}
             </Button>
             
             <Button
               onClick={handleSendMessage}
               disabled={isLoading || (!inputMessage.trim() && !uploadedImage)}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold h-8 text-xs"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold h-6 text-xs"
             >
               {isLoading ? (
-                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1"></div>
+                <div className="w-2 h-2 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1"></div>
               ) : (
-                <Send className="w-3 h-3 mr-1" />
+                <Send className="w-2 h-2 mr-1" />
               )}
               Send
             </Button>

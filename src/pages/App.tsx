@@ -145,6 +145,7 @@ const AppPage = () => {
   const totalDeals = completedDeals.length;
   const averageSavings = totalDeals > 0 ? Math.round(totalSavings / totalDeals) : 0;
   const activeNegotiationsCount = negotiationTabs.filter(tab => tab.status === 'active').length;
+  const successRate = totalDeals > 0 ? Math.round((completedDeals.filter(deal => deal.dealClosed).length / totalDeals) * 100) : 0;
 
   const tabsConfig = [
     { value: 'negotiate', label: 'Negotiate', icon: MessageSquare, count: negotiationTabs.length, gradient: 'from-emerald-500 to-cyan-500' },
@@ -161,92 +162,35 @@ const AppPage = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           onClick={createNewNegotiation}
-          className="w-16 h-16 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-blue-600 shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-110 border-0 group"
+          className="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-blue-600 shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-110 border-0 group"
         >
-          <Plus className="w-8 h-8 text-white group-hover:rotate-90 transition-transform duration-300" />
+          <Plus className="w-6 h-6 text-white group-hover:rotate-90 transition-transform duration-300" />
         </Button>
       </div>
 
       {/* Enhanced Savings Tracker */}
-      <div className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-blue-600 py-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-2 left-10 w-16 h-16 bg-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-2 right-10 w-24 h-24 bg-white/5 rounded-full animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 animate-pulse delay-500"></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-5 gap-6">
-            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border transform hover:scale-105 transition-all duration-300">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                ${totalSavings.toLocaleString()}
-              </div>
-              <div className="text-white/90 font-medium text-sm">Total Saved</div>
-            </div>
+      <SavingsTracker 
+        totalSavings={totalSavings}
+        totalDeals={totalDeals}
+        averageSavings={averageSavings}
+        activeDeals={activeNegotiationsCount}
+        successRate={successRate}
+      />
 
-            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border transform hover:scale-105 transition-all duration-300">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {activeNegotiationsCount}
-              </div>
-              <div className="text-white/90 font-medium text-sm">Active Deals</div>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border transform hover:scale-105 transition-all duration-300">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <History className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {totalDeals}
-              </div>
-              <div className="text-white/90 font-medium text-sm">Completed</div>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border transform hover:scale-105 transition-all duration-300">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                ${averageSavings}
-              </div>
-              <div className="text-white/90 font-medium text-sm">Avg. Savings</div>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur-md border-white/30 shadow-xl rounded-2xl p-6 text-center border transform hover:scale-105 transition-all duration-300">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <div className="w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">%</span>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {totalDeals > 0 ? Math.round((completedDeals.reduce((sum, deal) => sum + deal.savingsPercentage, 0) / totalDeals)) : 0}%
-              </div>
-              <div className="text-white/90 font-medium text-sm">Avg. Discount</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-black/20 backdrop-blur-xl shadow-xl rounded-2xl p-3 h-16 border border-white/20">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-black/20 backdrop-blur-xl shadow-xl rounded-2xl p-2 h-12 border border-white/20">
             {tabsConfig.map((tab) => (
               <TabsTrigger 
                 key={tab.value}
                 value={tab.value} 
-                className={`text-sm font-semibold h-12 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:${tab.gradient} data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-gray-300 hover:text-white flex items-center gap-2 hover:scale-105`}
+                className={`text-xs font-semibold h-8 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:${tab.gradient} data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-gray-300 hover:text-white flex items-center gap-2 hover:scale-105`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-3 h-3" />
                 <div className="flex items-center gap-1">
                   {tab.label}
                   {tab.count !== undefined && (
-                    <span className="bg-white/20 text-xs px-2 py-0.5 rounded-full font-semibold">
+                    <span className="bg-white/20 text-xs px-1.5 py-0.5 rounded-full font-semibold">
                       {tab.count}
                     </span>
                   )}
@@ -255,7 +199,7 @@ const AppPage = () => {
             ))}
           </TabsList>
 
-          <TabsContent value="negotiate" className="space-y-6">
+          <TabsContent value="negotiate" className="space-y-4">
             <NegotiationTabs
               tabs={negotiationTabs}
               onUpdateTab={updateNegotiationTab}
@@ -277,41 +221,54 @@ const AppPage = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/20">
-                <h3 className="text-2xl font-bold text-white mb-8">Savings Analytics</h3>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl rounded-xl border border-emerald-500/30">
-                    <span className="text-emerald-300 font-semibold">Total Saved</span>
-                    <span className="text-2xl font-bold text-emerald-400">${totalSavings.toLocaleString()}</span>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20">
+                <h3 className="text-xl font-bold text-white mb-6">Savings Analytics</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl rounded-xl border border-emerald-500/30">
+                    <span className="text-emerald-300 font-semibold text-sm">Total Saved</span>
+                    <span className="text-xl font-bold text-emerald-400">${totalSavings.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-xl rounded-xl border border-cyan-500/30">
-                    <span className="text-cyan-300 font-semibold">Deals Completed</span>
-                    <span className="text-2xl font-bold text-cyan-400">{totalDeals}</span>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-xl rounded-xl border border-cyan-500/30">
+                    <span className="text-cyan-300 font-semibold text-sm">Deals Completed</span>
+                    <span className="text-xl font-bold text-cyan-400">{totalDeals}</span>
                   </div>
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl rounded-xl border border-blue-500/30">
-                    <span className="text-blue-300 font-semibold">Average Savings</span>
-                    <span className="text-2xl font-bold text-blue-400">${averageSavings}</span>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl rounded-xl border border-blue-500/30">
+                    <span className="text-blue-300 font-semibold text-sm">Average Savings</span>
+                    <span className="text-xl font-bold text-blue-400">${averageSavings}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-xl border border-purple-500/30">
+                    <span className="text-purple-300 font-semibold text-sm">Success Rate</span>
+                    <span className="text-xl font-bold text-purple-400">{successRate}%</span>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/20">
-                <h3 className="text-2xl font-bold text-white mb-8">Category Breakdown</h3>
-                <div className="space-y-4">
-                  {['cars', 'electronics', 'furniture'].map(category => {
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20">
+                <h3 className="text-xl font-bold text-white mb-6">Category Breakdown</h3>
+                <div className="space-y-3">
+                  {['cars', 'electronics', 'furniture', 'real-estate', 'gadgets', 'motorcycles'].map(category => {
                     const categoryDeals = completedDeals.filter(deal => deal.category === category);
                     const categorySavings = categoryDeals.reduce((sum, deal) => sum + deal.savings, 0);
+                    const categoryAvgSavings = categoryDeals.length > 0 ? Math.round(categorySavings / categoryDeals.length) : 0;
+                    
+                    if (categoryDeals.length === 0) return null;
+                    
                     return (
-                      <div key={category} className="flex items-center justify-between p-4 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
-                        <span className="capitalize font-semibold text-white">{category}</span>
+                      <div key={category} className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
+                        <span className="capitalize font-semibold text-white text-sm">{category.replace('-', ' ')}</span>
                         <div className="text-right">
-                          <div className="font-bold text-emerald-400">${categorySavings}</div>
-                          <div className="text-sm text-gray-300">{categoryDeals.length} deals</div>
+                          <div className="font-bold text-emerald-400 text-sm">${categorySavings.toLocaleString()}</div>
+                          <div className="text-xs text-gray-300">{categoryDeals.length} deals • ${categoryAvgSavings} avg</div>
                         </div>
                       </div>
                     );
                   })}
+                  {completedDeals.length === 0 && (
+                    <div className="text-center py-6 text-gray-400">
+                      <p className="text-sm">No completed deals yet. Start negotiating to see your analytics!</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -323,19 +280,19 @@ const AppPage = () => {
       <Dialog open={showDealDialog} onOpenChange={setShowDealDialog}>
         <DialogContent className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 mb-2">
+            <DialogTitle className="text-lg font-bold text-gray-900 mb-2">
               Deal Completion
             </DialogTitle>
-            <DialogDescription className="text-gray-700 font-medium">
+            <DialogDescription className="text-gray-700 font-medium text-sm">
               Did you successfully close this deal?
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 pt-4">
-            <div className="flex gap-4">
+          <div className="space-y-4 pt-3">
+            <div className="flex gap-3">
               <Button
                 onClick={() => setDealClosed(true)}
-                className={`flex-1 h-12 rounded-xl font-semibold transition-all duration-300 ${
+                className={`flex-1 h-10 rounded-xl font-semibold transition-all duration-300 text-sm ${
                   dealClosed 
                     ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg scale-105' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -345,7 +302,7 @@ const AppPage = () => {
               </Button>
               <Button
                 onClick={() => setDealClosed(false)}
-                className={`flex-1 h-12 rounded-xl font-semibold transition-all duration-300 ${
+                className={`flex-1 h-10 rounded-xl font-semibold transition-all duration-300 text-sm ${
                   !dealClosed 
                     ? 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg scale-105' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -356,8 +313,8 @@ const AppPage = () => {
             </div>
 
             {dealClosed && (
-              <div className="space-y-4 p-4 bg-green-50 rounded-xl border border-green-200">
-                <Label htmlFor="finalPrice" className="text-lg font-semibold text-green-800">
+              <div className="space-y-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                <Label htmlFor="finalPrice" className="text-sm font-semibold text-green-800">
                   What was the final price?
                 </Label>
                 <Input
@@ -366,22 +323,22 @@ const AppPage = () => {
                   placeholder="Enter final price"
                   value={finalPrice}
                   onChange={(e) => setFinalPrice(e.target.value)}
-                  className="h-12 border-2 border-green-300 focus:border-green-500 bg-white text-gray-900 font-medium rounded-lg"
+                  className="h-10 border-2 border-green-300 focus:border-green-500 bg-white text-gray-900 font-medium rounded-lg text-sm"
                 />
               </div>
             )}
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-3">
               <Button
                 onClick={() => setShowDealDialog(false)}
                 variant="outline"
-                className="flex-1 h-12 rounded-xl font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="flex-1 h-10 rounded-xl font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleDealCompletion}
-                className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300"
+                className="flex-1 h-10 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 text-sm"
               >
                 Confirm
               </Button>

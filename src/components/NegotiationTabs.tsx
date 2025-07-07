@@ -92,16 +92,16 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
         <div className="w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl border border-emerald-500/30">
           <MessageSquare className="w-12 h-12 text-emerald-400" />
         </div>
-        <h3 className="text-3xl font-bold text-white mb-6">Start Your First Negotiation</h3>
-        <p className="text-lg text-gray-300 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
+        <h3 className="text-2xl font-bold text-white mb-4">Start Your First Negotiation</h3>
+        <p className="text-base text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
           Create a new negotiation tab to begin saving money with AI-powered strategies. 
           Use our advanced tools to analyze conversations and get perfect responses.
         </p>
         <Button 
           onClick={onCreateNew}
-          className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-blue-600 text-white font-semibold text-lg px-12 py-6 rounded-2xl shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-105 border-0"
+          className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-4 rounded-xl shadow-xl hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-105 border-0"
         >
-          <Plus className="w-6 h-6 mr-3" />
+          <Plus className="w-5 h-5 mr-2" />
           Create New Negotiation
         </Button>
       </div>
@@ -116,21 +116,21 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
           {tabs.map((tab) => (
             <div
               key={tab.id}
-              className={`flex items-center gap-4 px-6 py-4 rounded-2xl cursor-pointer transition-all duration-300 min-w-0 group ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 min-w-0 group ${
                 activeTab === tab.id
                   ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg scale-105'
                   : 'hover:bg-white/10 text-gray-300 hover:text-white hover:scale-102'
               }`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <div className={`w-3 h-3 rounded-full ${
+              <div className={`w-2 h-2 rounded-full ${
                 tab.status === 'active' 
                   ? 'bg-emerald-400 animate-pulse' 
                   : 'bg-gray-400'
               }`} />
-              <MessageSquare className="w-5 h-5 flex-shrink-0" />
+              <MessageSquare className="w-4 h-4 flex-shrink-0" />
               <div className="min-w-0">
-                <div className="font-semibold truncate max-w-32 text-sm">
+                <div className="font-medium truncate max-w-32 text-sm">
                   {tab.title || 'New Negotiation'}
                 </div>
                 {tab.category && (
@@ -148,13 +148,13 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                   e.stopPropagation();
                   onCloseTab(tab.id);
                 }}
-                className={`h-8 w-8 p-0 flex-shrink-0 ${
+                className={`h-6 w-6 p-0 flex-shrink-0 ${
                   activeTab === tab.id 
                     ? 'hover:bg-white/20 text-white' 
                     : 'hover:bg-red-100 text-red-500'
                 }`}
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3" />
               </Button>
             </div>
           ))}
@@ -162,9 +162,9 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
             onClick={onCreateNew}
             variant="ghost"
             size="sm"
-            className="flex-shrink-0 h-12 w-12 rounded-2xl hover:bg-emerald-500/20 text-emerald-400 hover:scale-110 transition-all duration-300"
+            className="flex-shrink-0 h-10 w-10 rounded-xl hover:bg-emerald-500/20 text-emerald-400 hover:scale-110 transition-all duration-300"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -176,25 +176,25 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
           className={activeTab === tab.id ? 'block' : 'hidden'}
         >
           <Card className="shadow-xl border-0 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20">
-            <CardContent className="p-8">
-              <div className="space-y-8">
-                {/* Category Selection with Change Option */}
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                {/* Category Selection with Enhanced Change Option */}
                 <div className="text-center">
                   {!tab.category ? (
-                    <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-lg font-semibold mb-8 border border-emerald-500/30">
-                      <Sparkles className="w-5 h-5" />
+                    <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-6 py-3 rounded-full text-base font-semibold mb-6 border border-emerald-500/30">
+                      <Sparkles className="w-4 h-4" />
                       Step 1: Choose Your Category
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-4 mb-8">
-                      <div className="inline-flex items-center gap-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl text-emerald-300 px-8 py-4 rounded-full text-lg font-semibold border border-emerald-500/30">
-                        <Sparkles className="w-5 h-5" />
+                    <div className="flex items-center justify-center gap-4 mb-6">
+                      <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/30 to-cyan-500/30 backdrop-blur-xl text-white px-6 py-3 rounded-full text-base font-semibold border border-emerald-500/50 shadow-lg">
+                        <Sparkles className="w-4 h-4" />
                         Category: {tab.category.charAt(0).toUpperCase() + tab.category.slice(1).replace('-', ' ')}
                       </div>
                       <Button
                         variant="outline"
                         onClick={() => onUpdateTab(tab.id, { category: '' })}
-                        className="bg-white/20 border-white/40 text-white hover:bg-white/30 hover:border-white/60 font-semibold px-6 py-3 rounded-xl text-sm shadow-lg backdrop-blur-sm"
+                        className="bg-white/90 border-2 border-gray-300 text-gray-800 hover:bg-white hover:border-gray-400 font-semibold px-4 py-2 rounded-lg text-sm shadow-lg backdrop-blur-sm hover:scale-105 transition-all duration-300"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Change Category
@@ -214,35 +214,35 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
 
                 {/* Main Interface */}
                 {tab.category && (
-                  <div className="space-y-8">
+                  <div className="space-y-6">
                     {/* Enhanced Sub-tabs - Smaller and Separate */}
                     <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-                      <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 backdrop-blur-xl shadow-xl rounded-xl p-2 h-12 border border-white/20">
+                      <TabsList className="grid w-full grid-cols-3 mb-6 bg-black/30 backdrop-blur-xl shadow-xl rounded-xl p-2 h-10 border border-white/20">
                         <TabsTrigger 
                           value="form" 
-                          className="text-sm font-semibold h-8 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
+                          className="text-xs font-semibold h-6 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
                         >
-                          <Sparkles className="w-4 h-4 mr-2" />
+                          <Sparkles className="w-3 h-3 mr-1" />
                           Manual Entry
                         </TabsTrigger>
                         <TabsTrigger 
                           value="image" 
-                          className="text-sm font-semibold h-8 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
+                          className="text-xs font-semibold h-6 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
                         >
-                          <Image className="w-4 h-4 mr-2" />
+                          <Image className="w-3 h-3 mr-1" />
                           Image Analyzer
                         </TabsTrigger>
                         <TabsTrigger 
                           value="ai-chat" 
-                          className="text-sm font-semibold h-8 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
+                          className="text-xs font-semibold h-6 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 text-white hover:text-white hover:bg-white/10"
                         >
-                          <Bot className="w-4 h-4 mr-2" />
+                          <Bot className="w-3 h-3 mr-1" />
                           AI Assistant
                         </TabsTrigger>
                       </TabsList>
 
-                      <TabsContent value="form" className="space-y-8">
-                        <div className="grid lg:grid-cols-2 gap-8">
+                      <TabsContent value="form" className="space-y-6">
+                        <div className="grid lg:grid-cols-2 gap-6">
                           <div>
                             <ListingForm
                               listingTitle={tab.title}
@@ -277,11 +277,11 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="image" className="space-y-8">
+                      <TabsContent value="image" className="space-y-6">
                         <ConversationImageAnalyzer selectedCategory={tab.category} />
                       </TabsContent>
 
-                      <TabsContent value="ai-chat" className="space-y-8">
+                      <TabsContent value="ai-chat" className="space-y-6">
                         <AITextChat
                           selectedCategory={tab.category}
                           negotiationData={{
