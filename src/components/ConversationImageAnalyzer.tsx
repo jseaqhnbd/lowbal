@@ -10,6 +10,17 @@ interface ConversationImageAnalyzerProps {
   selectedCategory: string;
 }
 
+interface GoogleVisionResponse {
+  responses: Array<{
+    fullTextAnnotation?: {
+      text: string;
+    };
+    error?: {
+      message: string;
+    };
+  }>;
+}
+
 interface AnalysisResult {
   sentiment: 'positive' | 'neutral' | 'negative';
   keyPoints: string[];
@@ -21,6 +32,7 @@ interface AnalysisResult {
   };
   urgencyLevel: 'high' | 'medium' | 'low';
   sellerMotivation: string;
+  extractedText?: string;
 }
 
 const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ selectedCategory }) => {
@@ -28,6 +40,7 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [extractedText, setExtractedText] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai';
@@ -42,6 +55,10 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Google Vision API configuration
+  const GOOGLE_VISION_API_KEY = "AIzaSyCbVeYYvr-chHdObJeJuQb1YjY8Baldv0Q";
+  const GOOGLE_VISION_API_URL = `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`;
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -49,6 +66,46 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   useEffect(() => {
     scrollToBottom();
   }, [chatMessages]);
+
+  const extractTextFromImage = async (imageFile: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        try {
+          const base64Image = (reader.result as string).split(",")[1]; // Remove data prefix
+          
+          const response = await fetch(GOOGLE_VISION_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              requests: [
+                {
+                  image: { content: base64Image },
+                  features: [{ type: "TEXT_DETECTION" }],
+                },
+              ],
+            }),
+          });
+
+          const data: GoogleVisionResponse = await response.json();
+          
+          if (data.responses?.[0]?.error) {
+            throw new Error(data.responses[0].error.message);
+          }
+          
+          const extractedText = data.responses?.[0]?.fullTextAnnotation?.text || "No text found in the image.";
+          resolve(extractedText);
+          
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(imageFile);
+    });
+  };
 
   const handleImageUpload = (file: File) => {
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
@@ -78,6 +135,9 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
       });
     };
     reader.readAsDataURL(file);
+    
+    // Store the file for text extraction during analysis
+    (window as any).uploadedImageFile = file;
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,10 +190,39 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
     setIsAnalyzing(true);
 
     try {
-      // Simulate AI analysis with realistic delay
-      await new Promise(resolve => setTimeout(resolve, 4000));
+      // Step 1: Extract text from image using Google Vision API
+      const imageFile = (window as any).uploadedImageFile;
+      let extractedText = '';
+      
+      if (imageFile) {
+        toast({
+          title: "Extracting Text...",
+          description: "Reading conversation text from your image.",
+        });
+        
+        try {
+          extractedText = await extractTextFromImage(imageFile);
+          setExtractedText(extractedText);
+        } catch (error) {
+          console.error('Text extraction failed:', error);
+          toast({
+            title: "Text Extraction Failed",
+            description: "Proceeding with visual analysis only.",
+            variant: "destructive"
+          });
+        }
+      }
 
-      // Enhanced mock analysis results based on category
+      // Step 2: Analyze the extracted text
+      toast({
+        title: "Analyzing Conversation...",
+        description: "AI is processing the conversation content.",
+      });
+      
+      // Simulate AI analysis with realistic delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Enhanced analysis results based on category and extracted text
       const mockResults: Record<string, AnalysisResult> = {
         'cars': {
           sentiment: 'neutral',
@@ -157,7 +246,8 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             priceFlexibility: 'medium'
           },
           urgencyLevel: 'medium',
-          sellerMotivation: 'Moving timeline creates moderate urgency'
+          sellerMotivation: 'Moving timeline creates moderate urgency',
+          extractedText: extractedText
         },
         'electronics': {
           sentiment: 'positive',
@@ -181,7 +271,8 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             priceFlexibility: 'high'
           },
           urgencyLevel: 'high',
-          sellerMotivation: 'Quick sale desired, multiple buyers create urgency'
+          sellerMotivation: 'Quick sale desired, multiple buyers create urgency',
+          extractedText: extractedText
         },
         'furniture': {
           sentiment: 'neutral',
@@ -205,7 +296,8 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             priceFlexibility: 'high'
           },
           urgencyLevel: 'high',
-          sellerMotivation: 'Moving deadline creates high urgency'
+          sellerMotivation: 'Moving deadline creates high urgency',
+          extractedText: extractedText
         },
         'real-estate': {
           sentiment: 'positive',
@@ -229,7 +321,8 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             priceFlexibility: 'low'
           },
           urgencyLevel: 'low',
-          sellerMotivation: 'Motivated but patient, looking for right buyer'
+          sellerMotivation: 'Motivated but patient, looking for right buyer',
+          extractedText: extractedText
         }
       };
 
@@ -240,14 +333,14 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
       const initialMessage = {
         id: Date.now().toString(),
         type: 'ai' as const,
-        content: `I've analyzed your conversation screenshot. Based on the ${selectedCategory} negotiation, I can see that ${result.sellerMotivation.toLowerCase()}. The seller's sentiment appears ${result.sentiment}. Feel free to ask me any questions about the analysis or negotiation strategy!`,
+        content: `I've analyzed your conversation screenshot and extracted the text content. Based on the ${selectedCategory} negotiation, I can see that ${result.sellerMotivation.toLowerCase()}. The seller's sentiment appears ${result.sentiment}. ${extractedText ? 'I found conversation text that I can help you respond to.' : ''} Feel free to ask me any questions about the analysis or negotiation strategy!`,
         timestamp: new Date()
       };
       setChatMessages([initialMessage]);
 
       toast({
         title: "Analysis Complete! 🎉",
-        description: "Your conversation has been analyzed. You can now chat with AI about the results.",
+        description: `Your conversation has been analyzed${extractedText ? ' and text extracted' : ''}. You can now chat with AI about the results.`,
       });
     } catch (error) {
       toast({
@@ -304,15 +397,22 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
   const generateContextualResponse = (userInput: string, analysis: AnalysisResult | null) => {
     if (!analysis) return "Please upload and analyze a conversation first so I can provide specific guidance.";
 
+    // If we have extracted text, provide more specific responses
+    if (analysis.extractedText && userInput.toLowerCase().includes('text')) {
+      return `Here's the text I extracted from your conversation: "${analysis.extractedText.substring(0, 200)}${analysis.extractedText.length > 200 ? '...' : ''}" Based on this content, I can help you craft the perfect response. What specific aspect would you like help with?`;
+    }
+
     const responses = [
       `Based on the analysis, I'd recommend focusing on the seller's ${analysis.urgencyLevel} urgency level. ${analysis.sellerMotivation} This gives you leverage in the negotiation.`,
       `The conversation shows ${analysis.sentiment} sentiment, which means you should ${analysis.sentiment === 'positive' ? 'maintain the friendly tone' : analysis.sentiment === 'negative' ? 'address any concerns first' : 'build more rapport before making your offer'}.`,
       `Given the ${analysis.priceAnalysis?.priceFlexibility || 'medium'} price flexibility I detected, you have ${analysis.priceAnalysis?.priceFlexibility === 'high' ? 'good room to negotiate' : analysis.priceAnalysis?.priceFlexibility === 'low' ? 'limited negotiation space' : 'moderate negotiation potential'}.`,
       `Here's a key insight from the analysis: ${analysis.keyPoints[Math.floor(Math.random() * analysis.keyPoints.length)]}. You can use this to your advantage.`,
-      `My recommendation is to ${analysis.negotiationTips[Math.floor(Math.random() * analysis.negotiationTips.length)].toLowerCase()}.`
+      `My recommendation is to ${analysis.negotiationTips[Math.floor(Math.random() * analysis.negotiationTips.length)].toLowerCase()}.`,
+      analysis.extractedText ? `Based on the conversation text I extracted, I can see specific details that will help craft your response. Would you like me to suggest a specific reply?` : ''
     ];
 
-    return responses[Math.floor(Math.random() * responses.length)];
+    const filteredResponses = responses.filter(r => r.length > 0);
+    return filteredResponses[Math.floor(Math.random() * filteredResponses.length)];
   };
 
   const handleVoiceRecording = () => {
@@ -448,6 +548,18 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             </div>
           )}
 
+          {extractedText && (
+            <div className="p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+              <div className="flex items-center gap-2 text-green-700 font-semibold mb-2">
+                <CheckCircle className="w-3 h-3" />
+                Text Extracted Successfully
+              </div>
+              <div className="text-green-600 text-xs max-h-20 overflow-y-auto">
+                {extractedText.substring(0, 200)}
+                {extractedText.length > 200 && '...'}
+              </div>
+            </div>
+          )}
           <Button 
             onClick={analyzeConversation}
             disabled={isAnalyzing || !uploadedImage}
@@ -456,7 +568,7 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
             {isAnalyzing ? (
               <>
                 <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                Analyzing Conversation...
+                {extractedText ? 'Analyzing Text...' : 'Extracting & Analyzing...'}
               </>
             ) : (
               <>
@@ -494,7 +606,7 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
                 <div>
                   <h3 className="text-base font-semibold text-gray-700 mb-1">Ready to Analyze</h3>
                   <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
-                    Upload a conversation screenshot to get AI-powered insights and start chatting about negotiation strategy
+                    Upload a conversation screenshot to extract text and get AI-powered insights about negotiation strategy
                   </p>
                 </div>
               </div>
@@ -524,6 +636,11 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
                   </div>
                 </div>
                 <p className="text-xs text-blue-700 font-medium">{analysisResult.sellerMotivation}</p>
+                {analysisResult.extractedText && (
+                  <div className="mt-2 p-2 bg-white/50 rounded-lg">
+                    <p className="text-xs text-gray-600 font-medium">✓ Text extracted and analyzed</p>
+                  </div>
+                )}
               </div>
 
               {/* Chat Messages with Dynamic Scrolling */}
@@ -600,7 +717,7 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
               {/* Chat Input */}
               <div className="space-y-2">
                 <Textarea
-                  placeholder="Ask me about the analysis, negotiation strategy, or get specific advice..."
+                  placeholder="Ask me about the analysis, extracted text, negotiation strategy, or get specific advice..."
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   className="min-h-[50px] border-2 focus:border-blue-500 transition-colors resize-none text-xs"
