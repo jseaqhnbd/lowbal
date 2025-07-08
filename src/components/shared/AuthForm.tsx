@@ -53,6 +53,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     try {
       if (email && password) {
         localStorage.setItem('isAuthenticated', 'true');
+        
+        if (isSignup) {
+          // Clear any existing onboarding data for new signups
+          localStorage.removeItem('hasCompletedOnboarding');
+          localStorage.removeItem('userOnboardingData');
+        }
+        
         toast({
           title: isSignup ? "Account Created" : "Login Successful",
           description: isSignup ? "Welcome to Lowbal!" : "Welcome back to Lowbal!",

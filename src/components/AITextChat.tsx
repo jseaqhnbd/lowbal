@@ -174,8 +174,8 @@ const AITextChat: React.FC<AITextChatProps> = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col p-3">
-        {/* Messages Area with Dynamic Scrolling */}
-        <div className="flex-1 overflow-y-auto mb-3 space-y-2 max-h-[280px]" style={{ scrollBehavior: 'smooth' }}>
+        {/* Enhanced Messages Area with Dynamic Scrolling */}
+        <div className="flex-1 overflow-y-auto mb-3 space-y-2 max-h-[280px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ scrollBehavior: 'smooth' }}>
           {messages.length === 0 ? (
             <div className="text-center py-4">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center mx-auto mb-2">

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from '../components/AppHeader';
 import NegotiationTabs from '../components/NegotiationTabs';
@@ -26,7 +25,7 @@ export interface NegotiationTab {
   status: 'active' | 'completed' | 'closed';
   createdAt: Date;
   lastActivity: Date;
-  progress: number; // 0-100 percentage
+  progress: number;
   messages: Array<{
     id: string;
     type: 'user' | 'ai' | 'seller';
@@ -56,20 +55,19 @@ const AppPage = () => {
   const [negotiationTabs, setNegotiationTabs] = useState<NegotiationTab[]>([]);
   const [completedDeals, setCompletedDeals] = useState<CompletedDeal[]>([]);
   const [showDealDialog, setShowDealDialog] = useState(false);
-  const [closingTabId, setClosingTabId] = useState<string>('');
+  const [closingTabId, setClosingTabId] = useState('');
   const [dealClosed, setDealClosed] = useState(false);
   const [finalPrice, setFinalPrice] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user has completed onboarding
     const hasCompletedOnboarding = localStorage.getItem('hasCompletedOnboarding');
     if (!hasCompletedOnboarding) {
       setShowOnboarding(true);
     }
   }, []);
 
-  const handleOnboardingComplete = (userData: any) => {
+  const handleOnboardingComplete = useCallback((userData: any) => {
     localStorage.setItem('hasCompletedOnboarding', 'true');
     localStorage.setItem('userOnboardingData', JSON.stringify(userData));
     setShowOnboarding(false);
@@ -78,13 +76,9 @@ const AppPage = () => {
       title: `Welcome to Lowbal! 🎉`,
       description: `Your ${userData.userType} profile is ready. Let's start saving money!`,
     });
-  };
+  }, [toast]);
 
-  if (showOnboarding) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
-  }
-
-  const createNewNegotiation = () => {
+  const createNewNegotiation = useCallback(() => {
     const newTab: NegotiationTab = {
       id: Date.now().toString(),
       title: '',
@@ -105,30 +99,28 @@ const AppPage = () => {
       title: "New Negotiation Started",
       description: "A new negotiation tab has been created.",
     });
-  };
+  }, [toast]);
 
-  const updateNegotiationTab = (tabId: string, updates: Partial<NegotiationTab>) => {
+  const updateNegotiationTab = useCallback((tabId: string, updates: Partial<NegotiationTab>) => {
     setNegotiationTabs(prev => 
       prev.map(tab => 
         tab.id === tabId ? { ...tab, ...updates, lastActivity: new Date() } : tab
       )
     );
-  };
+  }, []);
 
-  const closeNegotiationTab = (tabId: string) => {
+  const closeNegotiationTab = useCallback((tabId: string) => {
     const tab = negotiationTabs.find(t => t.id === tabId);
     if (!tab) return;
-
     setClosingTabId(tabId);
     setShowDealDialog(true);
-  };
+  }, [negotiationTabs]);
 
-  const handleContinueNegotiation = (negotiationId: string) => {
+  const handleContinueNegotiation = useCallback((negotiationId: string) => {
     setActiveMainTab('negotiate');
-    // The NegotiationTabs component will handle switching to the specific tab
-  };
+  }, []);
 
-  const handleDealCompletion = () => {
+  const handleDealCompletion = useCallback(() => {
     const tab = negotiationTabs.find(t => t.id === closingTabId);
     if (!tab) return;
 
@@ -165,26 +157,33 @@ const AppPage = () => {
     setClosingTabId('');
     setDealClosed(false);
     setFinalPrice('');
-  };
+  }, [negotiationTabs, closingTabId, dealClosed, finalPrice, toast]);
 
-  const totalSavings = completedDeals.reduce((sum, deal) => sum + deal.savings, 0);
-  const totalDeals = completedDeals.length;
-  const averageSavings = totalDeals > 0 ? Math.round(totalSavings / totalDeals) : 0;
-  const activeNegotiationsCount = negotiationTabs.filter(tab => tab.status === 'active').length;
-  const successRate = totalDeals > 0 ? Math.round((completedDeals.filter(deal => deal.dealClosed).length / totalDeals) * 100) : 0;
+  const stats = useMemo(() => {
+    const totalSavings = completedDeals.reduce((sum, deal) => sum + deal.savings, 0);
+    const totalDeals = completedDeals.length;
+    const averageSavings = totalDeals > 0 ? Math.round(totalSavings / totalDeals) : 0;
+    const activeNegotiationsCount = negotiationTabs.filter(tab => tab.status === 'active').length;
+    const successRate = totalDeals > 0 ? Math.round((completedDeals.filter(deal => deal.dealClosed).length / totalDeals) * 100) : 0;
+    
+    return { totalSavings, totalDeals, averageSavings, activeNegotiationsCount, successRate };
+  }, [completedDeals, negotiationTabs]);
 
-  const tabsConfig = [
+  const tabsConfig = useMemo(() => [
     { value: 'negotiate', label: 'Negotiate', icon: MessageSquare, count: negotiationTabs.length, gradient: 'from-emerald-500 to-cyan-500' },
-    { value: 'active', label: 'Active Deals', icon: Activity, count: activeNegotiationsCount, gradient: 'from-cyan-500 to-blue-500' },
-    { value: 'history', label: 'History', icon: History, count: totalDeals, gradient: 'from-blue-500 to-purple-500' },
+    { value: 'active', label: 'Active Deals', icon: Activity, count: stats.activeNegotiationsCount, gradient: 'from-cyan-500 to-blue-500' },
+    { value: 'history', label: 'History', icon: History, count: stats.totalDeals, gradient: 'from-blue-500 to-purple-500' },
     { value: 'analytics', label: 'Analytics', icon: TrendingUp, gradient: 'from-purple-500 to-pink-500' }
-  ];
+  ], [negotiationTabs.length, stats.activeNegotiationsCount, stats.totalDeals]);
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <BackgroundLayout>
       <AppHeader />
 
-      {/* Enhanced Floating Action Button */}
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           onClick={createNewNegotiation}
@@ -194,14 +193,7 @@ const AppPage = () => {
         </Button>
       </div>
 
-      {/* Enhanced Savings Tracker */}
-      <SavingsTracker 
-        totalSavings={totalSavings}
-        totalDeals={totalDeals}
-        averageSavings={averageSavings}
-        activeDeals={activeNegotiationsCount}
-        successRate={successRate}
-      />
+      <SavingsTracker {...stats} />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
@@ -253,19 +245,19 @@ const AppPage = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-xl rounded-xl border border-emerald-500/30">
                     <span className="text-emerald-300 font-semibold text-sm">Total Saved</span>
-                    <span className="text-xl font-bold text-emerald-400">${totalSavings.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-emerald-400">${stats.totalSavings.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 backdrop-blur-xl rounded-xl border border-cyan-500/30">
                     <span className="text-cyan-300 font-semibold text-sm">Deals Completed</span>
-                    <span className="text-xl font-bold text-cyan-400">{totalDeals}</span>
+                    <span className="text-xl font-bold text-cyan-400">{stats.totalDeals}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl rounded-xl border border-blue-500/30">
                     <span className="text-blue-300 font-semibold text-sm">Average Savings</span>
-                    <span className="text-xl font-bold text-blue-400">${averageSavings}</span>
+                    <span className="text-xl font-bold text-blue-400">${stats.averageSavings}</span>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-xl rounded-xl border border-purple-500/30">
                     <span className="text-purple-300 font-semibold text-sm">Success Rate</span>
-                    <span className="text-xl font-bold text-purple-400">{successRate}%</span>
+                    <span className="text-xl font-bold text-purple-400">{stats.successRate}%</span>
                   </div>
                 </div>
               </div>
@@ -302,7 +294,6 @@ const AppPage = () => {
         </Tabs>
       </div>
 
-      {/* Enhanced Deal Completion Dialog */}
       <Dialog open={showDealDialog} onOpenChange={setShowDealDialog}>
         <DialogContent className="bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl max-w-lg">
           <DialogHeader>

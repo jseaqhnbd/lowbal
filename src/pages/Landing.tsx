@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, Zap, Target, Shield, Clock, ArrowRight, CheckCircle, TrendingDown, Users, Star, Sparkles } from "lucide-react";
+import { MessageSquare, Zap, Target, ArrowRight, CheckCircle, TrendingDown, Users, Star, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import BackgroundLayout from '../components/shared/BackgroundLayout';
 import Logo from '../components/shared/Logo';
@@ -42,7 +42,6 @@ const Landing = () => {
 
   return (
     <BackgroundLayout>
-      {/* Header */}
       <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -64,7 +63,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 py-20">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
@@ -81,7 +79,6 @@ const Landing = () => {
               Lowbal uses advanced AI to craft perfect negotiation messages and calculate optimal counter-offers for any online marketplace.
             </p>
             
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-8 py-8">
               <StatsCard 
                 icon={Target} 
@@ -107,7 +104,7 @@ const Landing = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6">
-              <Link to="/app">
+              <Link to="/signup">
                 <Button size="lg" className="bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 hover:from-emerald-600 hover:via-cyan-600 hover:to-blue-600 text-white font-black text-xl px-12 py-6 rounded-2xl shadow-2xl hover:shadow-emerald-500/25 transform hover:scale-105 transition-all duration-300 border-0 w-full sm:w-auto">
                   Start Negotiating Now
                   <Zap className="w-6 h-6 ml-3" />
@@ -146,7 +143,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* Platforms */}
       <div className="bg-black/30 backdrop-blur-xl py-20 border-y border-white/10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
@@ -165,7 +161,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* How It Works */}
       <div className="py-24">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-20">
@@ -192,14 +187,13 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* CTA */}
       <div className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-blue-600 py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
           <h3 className="text-6xl font-black text-white mb-10">
             Ready to Save Money on Your Next Purchase?
           </h3>
-          <Link to="/app">
+          <Link to="/signup">
             <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 text-2xl px-16 py-8 rounded-2xl shadow-2xl hover:shadow-white/25 transition-all duration-300 transform hover:scale-105 font-black">
               Start Negotiating Free
               <ArrowRight className="w-8 h-8 ml-4" />
@@ -211,7 +205,6 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="bg-black/50 backdrop-blur-xl py-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center gap-6 mb-8">

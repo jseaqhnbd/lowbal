@@ -194,7 +194,7 @@ const NegotiationTabs: React.FC<NegotiationTabsProps> = ({
                       <Button
                         variant="outline"
                         onClick={() => onUpdateTab(tab.id, { category: '' })}
-                        className="bg-white/90 border-2 border-gray-300 text-gray-800 hover:bg-white hover:border-gray-400 font-semibold px-4 py-2 rounded-lg text-sm shadow-lg backdrop-blur-sm hover:scale-105 transition-all duration-300"
+                        className="bg-white border-2 border-gray-800 text-gray-900 hover:bg-gray-100 hover:border-gray-900 font-bold px-4 py-2 rounded-lg text-sm shadow-lg backdrop-blur-sm hover:scale-105 transition-all duration-300"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Change Category

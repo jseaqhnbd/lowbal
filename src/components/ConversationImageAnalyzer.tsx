@@ -527,7 +527,7 @@ const ConversationImageAnalyzer: React.FC<ConversationImageAnalyzerProps> = ({ s
               </div>
 
               {/* Chat Messages with Dynamic Scrolling */}
-              <div className="flex-1 overflow-y-auto mb-3 space-y-2 max-h-[250px]" style={{ scrollBehavior: 'smooth' }}>
+              <div className="flex-1 overflow-y-auto mb-3 space-y-2 max-h-[250px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ scrollBehavior: 'smooth' }}>
                 {chatMessages.map((message) => (
                   <div
                     key={message.id}

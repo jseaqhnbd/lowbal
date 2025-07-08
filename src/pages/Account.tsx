@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, User, CreditCard, Bell, Shield, Crown, Star, Check, X, Edit2, Save, Mail, Phone, MapPin, MessageSquare, LogOut } from "lucide-react";
+import { ArrowLeft, User, Crown, Star, Check, Edit2, Save, Mail, Phone, MapPin, MessageSquare, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import BackgroundLayout from '../components/shared/BackgroundLayout';
@@ -77,14 +77,6 @@ const Account = () => {
     });
   };
 
-  const handleCancelSubscription = () => {
-    toast({
-      title: "Subscription Cancelled",
-      description: "Your subscription will remain active until the end of the billing period.",
-      variant: "destructive"
-    });
-  };
-
   const handleSubmitReview = () => {
     if (!reviewData.title || !reviewData.content) {
       toast({
@@ -100,7 +92,6 @@ const Account = () => {
       description: "Thank you for sharing your experience with Lowbal!",
     });
 
-    // Reset form
     setReviewData({
       rating: 5,
       title: '',
@@ -112,6 +103,8 @@ const Account = () => {
 
   const handleSignOut = () => {
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('hasCompletedOnboarding');
+    localStorage.removeItem('userOnboardingData');
     toast({
       title: "Signed Out Successfully",
       description: "You have been logged out of your account.",
@@ -139,7 +132,6 @@ const Account = () => {
 
   return (
     <BackgroundLayout>
-      {/* Enhanced Header */}
       <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -163,7 +155,7 @@ const Account = () => {
 
       <div className="max-w-5xl mx-auto px-4 py-8">
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-black/20 backdrop-blur-xl shadow-2xl rounded-2xl p-3 h-14 border border-white/20">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/20 backdrop-blur-xl shadow-2xl rounded-2xl p-3 h-14 border border-white/20">
             <TabsTrigger 
               value="profile" 
               className="text-sm font-black h-10 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-gray-300 hover:text-white"
@@ -184,13 +176,6 @@ const Account = () => {
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Leave Review
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className="text-sm font-black h-10 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-300 text-gray-300 hover:text-white"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -348,27 +333,6 @@ const Account = () => {
                   </Card>
                 ))}
               </div>
-
-              <Card className="shadow-2xl border-0 bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-black text-gray-900">Billing Management</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border-2 border-red-200">
-                    <div>
-                      <h4 className="font-black text-red-800 text-sm">Cancel Subscription</h4>
-                      <p className="text-xs text-red-600 font-bold">You'll keep access until your billing period ends</p>
-                    </div>
-                    <Button
-                      onClick={handleCancelSubscription}
-                      variant="destructive"
-                      className="font-black px-6 py-3 rounded-xl text-sm"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
@@ -440,62 +404,6 @@ const Account = () => {
                   <Star className="w-4 h-4 mr-2" />
                   Submit Review
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <Card className="shadow-2xl border-0 bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl">
-              <CardHeader>
-                <CardTitle className="text-2xl font-black text-gray-900">Notification Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                    <div>
-                      <h4 className="font-black text-gray-900 text-sm">Email Notifications</h4>
-                      <p className="text-xs text-gray-600 font-bold">Receive updates about your negotiations</p>
-                    </div>
-                    <Switch
-                      checked={notifications.email}
-                      onCheckedChange={(checked) => setNotifications({...notifications, email: checked})}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                    <div>
-                      <h4 className="font-black text-gray-900 text-sm">Push Notifications</h4>
-                      <p className="text-xs text-gray-600 font-bold">Get notified about deal responses</p>
-                    </div>
-                    <Switch
-                      checked={notifications.push}
-                      onCheckedChange={(checked) => setNotifications({...notifications, push: checked})}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                    <div>
-                      <h4 className="font-black text-gray-900 text-sm">Deal Suggestions</h4>
-                      <p className="text-xs text-gray-600 font-bold">Receive better deal recommendations</p>
-                    </div>
-                    <Switch
-                      checked={notifications.deals}
-                      onCheckedChange={(checked) => setNotifications({...notifications, deals: checked})}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-gray-200">
-                  <h3 className="text-xl font-black text-gray-900 mb-6">Account Actions</h3>
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full h-12 font-black text-sm border-2 text-gray-700 rounded-xl">
-                      Export My Data
-                    </Button>
-                    <Button variant="destructive" className="w-full h-12 font-black text-sm rounded-xl">
-                      Delete Account
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
